@@ -1,0 +1,6 @@
+service:
+  name: Service1
+  description: Service1 server
+
+http_server:
+  port: 8080
