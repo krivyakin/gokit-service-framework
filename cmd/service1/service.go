@@ -13,6 +13,7 @@ import (
 	"github.com/krivyakin/gokit-service-framework/pkg/service1/middleware"
 	"github.com/krivyakin/gokit-service-framework/pkg/service1/transport"
 	http_transport "github.com/krivyakin/gokit-service-framework/pkg/service1/transport/http"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -57,8 +58,12 @@ func main() {
 	var handler http.Handler
 	{
 		endpoints := transport.MakeEndpoints(service)
-		handler = http_transport.NewService(ctx, endpoints, logger)
+		router := http_transport.NewServiceRouter(ctx, endpoints, logger)
+		router.Methods("GET").Path("/metrics").Handler(promhttp.Handler())
+
+		handler = router
 		handler = http_middleware.NewLoggingMiddleware(logger)(handler)
+		handler = http_middleware.NewMetricsMiddleware()(handler)
 	}
 
 	{

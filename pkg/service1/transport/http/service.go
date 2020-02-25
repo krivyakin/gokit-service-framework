@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-func NewService(_ context.Context, svcEndpoints transport.Endpoints, logger log.Logger) http.Handler {
+func NewServiceRouter(_ context.Context, svcEndpoints transport.Endpoints, logger log.Logger) *mux.Router {
 	logger = logger.WithLocation("http.service")
 	r := mux.NewRouter()
 	options := []kithttp.ServerOption{
