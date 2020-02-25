@@ -5,6 +5,7 @@ import (
 	http2 "github.com/krivyakin/gokit-service-framework/pkg/http"
 	"github.com/krivyakin/gokit-service-framework/pkg/log"
 	"net/http"
+	"runtime/debug"
 )
 
 type loggingMiddleware struct {
@@ -22,16 +23,27 @@ func NewLoggingMiddleware(logger log.Logger) http2.HTTPMiddleware {
 	}
 }
 
-func (l *loggingMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var lrw *http2.LoggingResponseWriter
-	var status int
-	defer func() {
-		l.logger.Info("status", status, "request", r.RequestURI)
-	}()
-	ctx := log.ContextWithReqID(r.Context(), uuid.New().String())
-	r = r.WithContext(ctx)
+func (l *loggingMiddleware) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	reqid := uuid.New().String()
+	ctx := log.ContextWithReqID(req.Context(), reqid)
+	req = req.WithContext(ctx)
 
-	lrw = http2.NewLoggingResponseWriter(w)
-	l.next.ServeHTTP(lrw, r)
-	status = lrw.StatusCode
+	var lrw *loggingResponseWriter = w.(*loggingResponseWriter)
+
+	defer func() {
+		var keyval []interface{}
+		if r := recover(); r != nil {
+			lrw.WriteHeader(http.StatusInternalServerError)
+			keyval = append(keyval, "error", r, "stack", string(debug.Stack()))
+		}
+		keyval = append([]interface{}{ "status", lrw.StatusCode, "request", req.RequestURI, "reqid", reqid}, keyval...)
+
+		if lrw.StatusCode == http.StatusOK || lrw.StatusCode == http.StatusNoContent ||
+			lrw.StatusCode == http.StatusMovedPermanently || lrw.StatusCode == http.StatusFound {
+			l.logger.Infom("REQUEST", keyval...)
+		} else {
+			l.logger.Errorm("REQUEST", keyval...)
+		}
+	}()
+	l.next.ServeHTTP(lrw, req)
 }

@@ -42,6 +42,7 @@ func encodeResponse(ctx context.Context, w http.ResponseWriter, response interfa
 		encodeErrorResponse(ctx, e.error(), w)
 		return nil
 	}
+	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	return json.NewEncoder(w).Encode(response)
 }

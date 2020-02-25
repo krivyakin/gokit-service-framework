@@ -64,6 +64,7 @@ func main() {
 		handler = router
 		handler = http_middleware.NewLoggingMiddleware(logger)(handler)
 		handler = http_middleware.NewMetricsMiddleware()(handler)
+		handler = http_middleware.NewResponseWriterMiddleware()(handler)
 	}
 
 	{

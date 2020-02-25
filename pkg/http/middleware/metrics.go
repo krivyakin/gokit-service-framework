@@ -55,17 +55,15 @@ func NewMetricsMiddleware() http2.HTTPMiddleware {
 }
 
 func (l *metricsMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var lrw *http2.LoggingResponseWriter
-	var status int
+	var lrw *loggingResponseWriter = w.(*loggingResponseWriter)
+
 	defer func(begin time.Time) {
-		statusStr := strconv.Itoa(status)
+		statusStr := strconv.Itoa(lrw.StatusCode)
 		lvs := []string{"method", r.Method, "Path", r.URL.Path, "status", statusStr}
 		l.metrics.requestCount.With(lvs...).Add(1)
 		l.metrics.requestLatency.With(lvs...).Observe(time.Since(begin).Seconds())
 		l.metrics.requestLatencyH.With(lvs...).Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	lrw = http2.NewLoggingResponseWriter(w)
 	l.next.ServeHTTP(lrw, r)
-	status = lrw.StatusCode
 }
