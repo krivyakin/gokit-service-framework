@@ -19,13 +19,11 @@ import (
 	"go.uber.org/zap/zapcore"
 	"net/http"
 	"os"
+	"time"
 )
 
 func NewZapLogger() *zap.Logger {
 	encoderCfg := zapcore.EncoderConfig{
-		MessageKey:     "",
-		LevelKey:       "",
-		NameKey:        "log",
 		TimeKey:        "time",
 		EncodeLevel:    zapcore.LowercaseLevelEncoder,
 		EncodeTime:     zapcore.EpochTimeEncoder,
@@ -62,6 +60,10 @@ func main() {
 		router.Methods("GET").Path("/metrics").Handler(promhttp.Handler())
 
 		handler = router
+		{
+			timeout := viper.GetDuration("http_server.timeout")
+			handler = http.TimeoutHandler(handler, timeout * time.Millisecond, "Timeout")
+		}
 		handler = http_middleware.NewLoggingMiddleware(logger)(handler)
 		handler = http_middleware.NewMetricsMiddleware()(handler)
 		handler = http_middleware.NewResponseWriterMiddleware()(handler)

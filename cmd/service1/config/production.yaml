@@ -4,3 +4,4 @@ service:
 
 http_server:
   port: 8080
+  timeout: 1 # ms

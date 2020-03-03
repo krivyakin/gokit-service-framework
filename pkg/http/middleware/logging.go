@@ -6,6 +6,7 @@ import (
 	"github.com/krivyakin/gokit-service-framework/pkg/log"
 	"net/http"
 	"runtime/debug"
+	"time"
 )
 
 type loggingMiddleware struct {
@@ -30,13 +31,19 @@ func (l *loggingMiddleware) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 
 	var lrw *loggingResponseWriter = w.(*loggingResponseWriter)
 
-	defer func() {
+	defer func(start time.Time) {
 		var keyval []interface{}
 		if r := recover(); r != nil {
 			lrw.WriteHeader(http.StatusInternalServerError)
 			keyval = append(keyval, "error", r, "stack", string(debug.Stack()))
 		}
-		keyval = append([]interface{}{ "status", lrw.StatusCode, "request", req.RequestURI, "reqid", reqid}, keyval...)
+		basicInfo := []interface{}{
+			"status", lrw.StatusCode,
+			"request", req.RequestURI,
+			"reqid", reqid,
+			"elapsed", time.Now().Sub(start).Seconds(),
+		}
+		keyval = append(basicInfo, keyval...)
 
 		if lrw.StatusCode == http.StatusOK || lrw.StatusCode == http.StatusNoContent ||
 			lrw.StatusCode == http.StatusMovedPermanently || lrw.StatusCode == http.StatusFound {
@@ -44,6 +51,6 @@ func (l *loggingMiddleware) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 		} else {
 			l.logger.Errorm("REQUEST", keyval...)
 		}
-	}()
+	}(time.Now())
 	l.next.ServeHTTP(lrw, req)
 }
