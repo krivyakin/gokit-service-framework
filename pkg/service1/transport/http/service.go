@@ -10,9 +10,8 @@ import (
 	"net/http"
 )
 
-func NewServiceRouter(_ context.Context, svcEndpoints transport.Endpoints, logger log.Logger) *mux.Router {
+func Register(svcEndpoints transport.Endpoints, logger log.Logger, r *mux.Router) {
 	logger = logger.WithLocation("http.service")
-	r := mux.NewRouter()
 	options := []kithttp.ServerOption{
 		kithttp.ServerErrorLogger(logger.KitLogger()),
 		kithttp.ServerErrorEncoder(encodeErrorResponse),
@@ -24,7 +23,6 @@ func NewServiceRouter(_ context.Context, svcEndpoints transport.Endpoints, logge
 		encodeResponse,
 		options...,
 	))
-	return r
 }
 
 func decodeConfigRequest(_ context.Context, _ *http.Request) (request interface{}, err error) {

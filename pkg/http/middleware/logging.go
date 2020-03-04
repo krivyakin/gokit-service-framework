@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"github.com/google/uuid"
-	http2 "github.com/krivyakin/gokit-service-framework/pkg/http"
 	"github.com/krivyakin/gokit-service-framework/pkg/log"
 	"net/http"
 	"runtime/debug"
@@ -14,7 +13,7 @@ type loggingMiddleware struct {
 	next   http.Handler
 }
 
-func NewLoggingMiddleware(logger log.Logger) http2.HTTPMiddleware {
+func NewLoggingMiddleware(logger log.Logger) func(next http.Handler) http.Handler {
 	logger = logger.WithLocation("http.loggingMiddleware")
 	return func(next http.Handler) http.Handler {
 		return &loggingMiddleware{

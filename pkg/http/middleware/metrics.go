@@ -3,7 +3,6 @@ package middleware
 import (
 	"github.com/go-kit/kit/metrics"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
-	http2 "github.com/krivyakin/gokit-service-framework/pkg/http"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"strconv"
@@ -21,7 +20,7 @@ type metricsMiddleware struct {
 	next    http.Handler
 }
 
-func NewMetricsMiddleware() http2.HTTPMiddleware {
+func NewMetricsMiddleware() func(next http.Handler) http.Handler {
 	fieldKeys := []string{"method", "Path", "status"}
 	metrics := httpMetrics{
 		requestCount: kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{

@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	http2 "github.com/krivyakin/gokit-service-framework/pkg/http"
 	"net/http"
 )
 
@@ -23,7 +22,7 @@ type responseWriterMiddleware struct {
 	next   http.Handler
 }
 
-func NewResponseWriterMiddleware() http2.HTTPMiddleware {
+func NewResponseWriterMiddleware() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return &responseWriterMiddleware{
 			next:   next,

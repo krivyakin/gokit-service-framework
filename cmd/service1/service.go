@@ -1,9 +1,9 @@
 package main
 
 import (
-	"context"
 	"flag"
 	kitzap "github.com/go-kit/kit/log/zap"
+	"github.com/gorilla/mux"
 	"github.com/krivyakin/gokit-service-framework/pkg/config"
 	httpserv "github.com/krivyakin/gokit-service-framework/pkg/http"
 	http_middleware "github.com/krivyakin/gokit-service-framework/pkg/http/middleware"
@@ -17,7 +17,6 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"net/http"
 	"os"
 	"time"
 )
@@ -39,7 +38,6 @@ func main() {
 	)
 	flag.Parse()
 
-	ctx := context.Background()
 	logger := log.NewLogger(kitzap.NewZapSugarLogger(NewZapLogger(), zapcore.DebugLevel)).WithLocation("root")
 
 	if err := config.InitConfig(*configDir); err != nil {
@@ -53,26 +51,23 @@ func main() {
 		service = middleware.NewLoggingMiddleware(logger)(service)
 	}
 
-	var handler http.Handler
+	router := mux.NewRouter()
 	{
 		endpoints := transport.MakeEndpoints(service)
-		router := http_transport.NewServiceRouter(ctx, endpoints, logger)
-		router.Methods("GET").Path("/metrics").Handler(promhttp.Handler())
+		http_transport.Register(endpoints, logger, router)
 
-		handler = router
-		{
-			timeout := viper.GetDuration("http_server.timeout")
-			handler = http.TimeoutHandler(handler, timeout * time.Millisecond, "Timeout")
-		}
-		handler = http_middleware.NewLoggingMiddleware(logger)(handler)
-		handler = http_middleware.NewMetricsMiddleware()(handler)
-		handler = http_middleware.NewResponseWriterMiddleware()(handler)
+		router.Use(http_middleware.NewResponseWriterMiddleware())
+		router.Use(http_middleware.NewLoggingMiddleware(logger))
+		router.Use(http_middleware.NewMetricsMiddleware())
+		timeout := viper.GetDuration("http_server.timeout") * time.Millisecond
+		router.Use(http_middleware.NewTimeoutMiddleware(timeout))
 	}
+	router.Methods("GET").Path("/metrics").Handler(promhttp.Handler())
 
 	{
 		logger.Infom("service started")
 		httpAddr := ":" + viper.GetString("http_server.port")
-		srv := httpserv.NewServer(handler, logger, httpAddr)
+		srv := httpserv.NewServer(router, logger, httpAddr)
 		logger.Infom("service stopped", "status", srv.Start())
 	}
 }
