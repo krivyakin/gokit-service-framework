@@ -17,8 +17,16 @@ func Register(svcEndpoints transport.Endpoints, logger log.Logger, r *mux.Router
 		kithttp.ServerErrorEncoder(encodeErrorResponse),
 	}
 
+	//NEW_HANDLER_STEP6: add an HTTP handler for a new endpoint
 	r.Methods("GET").Path("/config").Handler(kithttp.NewServer(
 		svcEndpoints.Config,
+		decodeConfigRequest,
+		encodeResponse,
+		options...,
+	))
+
+	r.Methods("GET").Path("/info").Handler(kithttp.NewServer(
+		svcEndpoints.Info,
 		decodeConfigRequest,
 		encodeResponse,
 		options...,

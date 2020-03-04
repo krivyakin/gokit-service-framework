@@ -10,8 +10,8 @@ import (
 )
 
 type httpMetrics struct {
-	requestCount   metrics.Counter
-	requestLatency metrics.Histogram
+	requestCount    metrics.Counter
+	requestLatency  metrics.Histogram
 	requestLatencyH metrics.Histogram
 }
 

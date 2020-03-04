@@ -37,7 +37,7 @@ func (s *Server) Start() error {
 	go func() {
 		s.logger.Info("transport", "HTTP", "addr", s.httpAddr)
 		server := &http.Server{
-			Addr:   s. httpAddr,
+			Addr:    s.httpAddr,
 			Handler: s.handler,
 		}
 		errs <- server.ListenAndServe()

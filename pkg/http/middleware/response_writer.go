@@ -19,13 +19,13 @@ func (lrw *loggingResponseWriter) WriteHeader(code int) {
 }
 
 type responseWriterMiddleware struct {
-	next   http.Handler
+	next http.Handler
 }
 
 func NewResponseWriterMiddleware() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return &responseWriterMiddleware{
-			next:   next,
+			next: next,
 		}
 	}
 }
@@ -34,4 +34,3 @@ func (l *responseWriterMiddleware) ServeHTTP(w http.ResponseWriter, req *http.Re
 	var lrw = NewLoggingResponseWriter(w)
 	l.next.ServeHTTP(lrw, req)
 }
-
