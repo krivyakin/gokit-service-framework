@@ -6,27 +6,29 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"github.com/krivyakin/gokit-service-framework/pkg/log"
+	"github.com/krivyakin/gokit-service-framework/pkg/service1"
 	"github.com/krivyakin/gokit-service-framework/pkg/service1/transport"
 	"net/http"
 )
 
-func Register(svcEndpoints transport.Endpoints, logger log.Logger, r *mux.Router) {
+func RegisterService(service service1.Service, logger log.Logger, r *mux.Router) {
 	logger = logger.WithLocation("http.service")
 	options := []kithttp.ServerOption{
 		kithttp.ServerErrorLogger(logger.KitLogger()),
 		kithttp.ServerErrorEncoder(encodeErrorResponse),
 	}
 
+	endpoints := transport.MakeEndpoints(service)
 	//NEW_HANDLER_STEP6: add an HTTP handler for a new endpoint
 	r.Methods("GET").Path("/config").Handler(kithttp.NewServer(
-		svcEndpoints.Config,
+		endpoints.Config,
 		decodeConfigRequest,
 		encodeResponse,
 		options...,
 	))
 
 	r.Methods("GET").Path("/info").Handler(kithttp.NewServer(
-		svcEndpoints.Info,
+		endpoints.Info,
 		decodeConfigRequest,
 		encodeResponse,
 		options...,

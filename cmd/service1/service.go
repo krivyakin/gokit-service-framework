@@ -3,17 +3,13 @@ package main
 import (
 	"flag"
 	kitzap "github.com/go-kit/kit/log/zap"
-	"github.com/gorilla/mux"
 	"github.com/krivyakin/gokit-service-framework/pkg/config"
 	httpserv "github.com/krivyakin/gokit-service-framework/pkg/http"
-	http_middleware "github.com/krivyakin/gokit-service-framework/pkg/http/middleware"
 	"github.com/krivyakin/gokit-service-framework/pkg/log"
 	"github.com/krivyakin/gokit-service-framework/pkg/service1"
 	"github.com/krivyakin/gokit-service-framework/pkg/service1/implementation"
 	"github.com/krivyakin/gokit-service-framework/pkg/service1/middleware"
-	"github.com/krivyakin/gokit-service-framework/pkg/service1/transport"
 	http_transport "github.com/krivyakin/gokit-service-framework/pkg/service1/transport/http"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -51,18 +47,9 @@ func main() {
 		service = middleware.NewLoggingMiddleware(logger)(service)
 	}
 
-	router := mux.NewRouter()
-	{
-		endpoints := transport.MakeEndpoints(service)
-		http_transport.Register(endpoints, logger, router)
-
-		router.Use(http_middleware.NewResponseWriterMiddleware())
-		router.Use(http_middleware.NewLoggingMiddleware(logger))
-		router.Use(http_middleware.NewMetricsMiddleware())
-		timeout := viper.GetDuration("http_server.timeout") * time.Millisecond
-		router.Use(http_middleware.NewTimeoutMiddleware(timeout))
-	}
-	router.Methods("GET").Path("/metrics").Handler(promhttp.Handler())
+	timeout := viper.GetDuration("http_server.timeout") * time.Millisecond
+	router := httpserv.NewDefaultRouter(logger, timeout)
+	http_transport.RegisterService(service, logger, router)
 
 	{
 		logger.Infom("service started")
