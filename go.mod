@@ -3,6 +3,7 @@ module github.com/krivyakin/gokit-service-framework
 go 1.12
 
 require (
+	github.com/cheekybits/genny v1.0.0
 	github.com/go-kit/kit v0.10.0
 	github.com/google/uuid v1.0.0
 	github.com/gorilla/mux v1.7.3
