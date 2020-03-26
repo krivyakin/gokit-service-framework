@@ -16,7 +16,7 @@ type MapKeyTypeValueType interface {
 }
 
 type mapKeyTypeValueType struct {
-	data map[KeyType]ValueType
+	data  map[KeyType]ValueType
 	mutex sync.RWMutex
 }
 

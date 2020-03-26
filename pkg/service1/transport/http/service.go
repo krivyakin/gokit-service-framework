@@ -29,7 +29,7 @@ func RegisterService(service service1.Service, logger log.Logger, r *mux.Router)
 
 	r.Methods("GET").Path("/info").Handler(kithttp.NewServer(
 		endpoints.Info,
-		decodeConfigRequest,
+		decodeInfoRequest,
 		encodeResponse,
 		options...,
 	))
@@ -37,6 +37,10 @@ func RegisterService(service service1.Service, logger log.Logger, r *mux.Router)
 
 func decodeConfigRequest(_ context.Context, _ *http.Request) (request interface{}, err error) {
 	return transport.ConfigRequest{}, nil
+}
+
+func decodeInfoRequest(_ context.Context, _ *http.Request) (request interface{}, err error) {
+	return transport.InfoRequest{}, nil
 }
 
 type errorer interface {
